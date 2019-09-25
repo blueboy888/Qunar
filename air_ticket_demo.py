@@ -163,14 +163,14 @@ class QnrAirplanTicketSpider:
             })
             item = self._get__m__(cookie)
             result = self._req_api(item)
-            price_offset = self.get_price_offset(result)
-            print('价格反爬偏移量: {}'.format(price_offset))
             if result['code'] == 0:
                 print('请求成功! ')
+                price_offset = self.get_price_offset(result)
+                print('价格反爬偏移量: {}'.format(price_offset))
                 self.parse(result, price_offset)
                 return True
             else:
-                print('请求失败! ')
+                print('请求失败, 请检查是否有该机场或者日期格式! ')
 
 
 if __name__ == '__main__':
