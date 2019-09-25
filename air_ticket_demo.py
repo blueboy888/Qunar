@@ -5,6 +5,8 @@
 # @File    : air_ticket_demo.py
 # @Software: PyCharm
 
+import re
+import time
 import execjs
 import requests
 from urllib.parse import urlencode
@@ -97,6 +99,7 @@ class QnrAirplanTicketSpider:
             'departureDate': self.departure_time,
             'ex_track': '',
             '__m__': item['__m__'],
+            'st': int(time.time() * 1000),
             'sort': '',
             '_v': '4'
         }
@@ -106,7 +109,23 @@ class QnrAirplanTicketSpider:
         return resp
 
     @staticmethod
-    def parse(result):
+    def get_price_offset(result):
+        """
+        获取价格偏移量
+        :return:
+        """
+        offset_js = result['t1000'].replace('(0||(', '').replace('));', '')
+        func_name = re.search(r'function (.*?)\(a\)', offset_js).group(1)
+        replace_js = re.findall(r'\]\+.*?;for\((.*)', offset_js)[-1]
+        offset_x = re.findall(r'\]\+(.*?);for\(.*', offset_js)[-1].replace('=', '').replace(')', '')
+        offset_js = offset_js.replace(replace_js, '); return ' + offset_x + ' }').replace('for(); ', '')
+        offset_js = re.sub('!0(.*?):', '', offset_js)
+        offset_js = re.sub(r'\(new Image\)(.*?),', ' ', offset_js)
+        ctx = execjs.compile(offset_js)
+        return ctx.call(func_name, result)
+
+    @staticmethod
+    def parse(result, price_offset):
         flights = result['data']['flights']
         for flight in flights:
             binfo = flight['binfo'] if 'binfo' in set(flight.keys()) else flight['binfo1']
@@ -129,7 +148,7 @@ class QnrAirplanTicketSpider:
                 'stopAirports': binfo['stopAirports'],
                 'stopCitys': binfo['stopCitys'],
                 'discountStr': flight['discountStr'],
-                'minPrice': flight['minPrice']
+                'minPrice': flight['minPrice'] + price_offset
             }
             print(item)
 
@@ -144,9 +163,11 @@ class QnrAirplanTicketSpider:
             })
             item = self._get__m__(cookie)
             result = self._req_api(item)
+            price_offset = self.get_price_offset(result)
+            print('价格反爬偏移量: {}'.format(price_offset))
             if result['code'] == 0:
                 print('请求成功! ')
-                self.parse(result)
+                self.parse(result, price_offset)
                 return True
             else:
                 print('请求失败! ')
