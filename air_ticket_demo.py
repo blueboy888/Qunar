@@ -87,12 +87,11 @@ class QnrAirplanTicketSpider:
 
     def _req_api(self, item):
         """
-        拿到所有加密参数, 访问 api 接口
+        拿到所有加密参数, 请求 api 接口
         :param item:
         :return:
         """
         api = 'https://flight.qunar.com/touch/api/domestic/wbdflightlist?'
-
         params = {
             'departureCity': self.departure_airport,
             'arrivalCity': self.arrival_airport,
@@ -105,7 +104,6 @@ class QnrAirplanTicketSpider:
         }
         self.headers.update(item['header'])
         resp = requests.get(api, params=params, headers=self.headers).json()
-
         return resp
 
     @staticmethod
