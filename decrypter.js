@@ -29,6 +29,8 @@
 // var win = window
 //   , nav = win.navigator;
 
+var MyDecrypter = {}; // 该代码已删除, 请自行补全
+
 function decrypt(e, t) {
     t = t + t + t.substring(0, 4);
     var n = MyDecrypter.AES.decrypt(e, MyDecrypter.enc.Utf8.parse(t), {
